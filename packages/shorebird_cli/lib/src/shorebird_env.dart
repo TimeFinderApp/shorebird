@@ -1,4 +1,5 @@
 import 'dart:io' hide Platform;
+import 'dart:convert';
 
 import 'package:checked_yaml/checked_yaml.dart';
 import 'package:cli_util/cli_util.dart';
@@ -56,9 +57,26 @@ class ShorebirdEnv {
     ).readAsStringSync().trim();
   }
 
+  /// Get the Flutter version from FVM if available
+  String? getFvmVersion() {
+    final fvmrcFile = File(
+      p.join(getFlutterProjectRoot()?.path ?? '', '.fvmrc'),
+    );
+    if (!fvmrcFile.existsSync()) return null;
+
+    try {
+      final json =
+          jsonDecode(fvmrcFile.readAsStringSync()) as Map<String, dynamic>;
+      return json['flutter'] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Get the Shorebird Flutter revision.
   String get flutterRevision {
     return _flutterRevisionOverride ??
+        getFvmVersion() ??
         File(
           p.join(shorebirdRoot.path, 'bin', 'internal', 'flutter.version'),
         ).readAsStringSync().trim();
